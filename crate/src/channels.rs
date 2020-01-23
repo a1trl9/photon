@@ -371,26 +371,30 @@ pub fn selective_hue_rotate(mut photon_image: &mut PhotonImage, ref_color: Rgb, 
 /// photon::channels::invert(&mut img);
 /// ```
 #[wasm_bindgen]
-pub fn invert(mut photon_image: &mut PhotonImage) {
-    let img = helpers::dyn_image_from_raw(&photon_image);
+pub fn invert(photon_image: &mut PhotonImage) {
+    // let img = helpers::dyn_image_from_raw(&photon_image);
+    let length = photon_image.width * photon_image.height;
 
-    let (_width, _height) = img.dimensions();
-    let mut img = img.to_rgba();
-    for x in 0.._width {
-        for y in 0.._height {
-            let px = img.get_pixel(x, y);
+    // let (_width, _height) = img.dimensions();
+    // let mut img = img.to_rgba();
+    let mut index = 0;
+    for i in 0..length {
+        // let px = img.get_pixel(x, y);
 
-            let r_val = px.data[0];
-            let g_val = px.data[1];
-            let b_val = px.data[2];
-            let alpha = px.data[3];
+        // let r_val = photon_image.raw_pixels[index];
+        // let g_val = photon_image.raw_pixels[index + 1];
+        // let b_val = photon_image.raw_pixels[index + 2];
+        photon_image.raw_pixels[index] = 255 - photon_image.raw_pixels[index];
+        photon_image.raw_pixels[index + 1] = 255 - photon_image.raw_pixels[index + 1];
+        photon_image.raw_pixels[index + 2] = 255 - photon_image.raw_pixels[index + 2];
+        index += 4;
+        // let alpha = px.data[3];
 
-            img.put_pixel(x, y, image::Rgba (
-                [255 - r_val, 255 - g_val, 255 - b_val, alpha]
-            ));
-        }
+        // img.put_pixel(x, y, image::Rgba (
+        //     [255 - r_val, 255 - g_val, 255 - b_val, alpha]
+        // ));
     }
-    photon_image.raw_pixels = img.to_vec();
+    // photon_image.raw_pixels = img.to_vec();
 }
 
 /// Get the similarity of two colours in the l*a*b colour space using the CIE76 formula.

@@ -573,9 +573,10 @@ pub fn desaturate_lch(img: &mut PhotonImage, level: f32) {
 /// ```
 #[wasm_bindgen]
 pub fn mix_with_colour(photon_image: &mut PhotonImage, mix_colour: Rgb, opacity: f32) {
-    let img = helpers::dyn_image_from_raw(&photon_image);
-    let (_width, _height) = img.dimensions();
-    let mut img = img.to_rgba();
+    // let img = helpers::dyn_image_from_raw(&photon_image);
+    // let (_width, _height) = img.dimensions();
+    let length = photon_image.width * photon_image.height;
+    // let mut img = img.to_rgba();
 
     // cache (mix_color_value * opacity) and (1 - opacity) so we dont need to calculate them each time during loop.
     let mix_red_offset = mix_colour.r as f32 * opacity;
@@ -583,19 +584,32 @@ pub fn mix_with_colour(photon_image: &mut PhotonImage, mix_colour: Rgb, opacity:
     let mix_blue_offset = mix_colour.b as f32 * opacity;
     let factor = 1.0 - opacity;
 
-    for x in 0.._width {
-        for y in 0.._height {
-            let px = img.get_pixel(x, y);
-            let r_value = mix_red_offset + (px.data[0] as f32) * factor;
-            let g_value = mix_green_offset + (px.data[1] as f32) * factor;
-            let b_value = mix_blue_offset + (px.data[2] as f32) * factor;
-            let alpha = px.data[3];
-            img.put_pixel(x, y, image::Rgba (
-                    [r_value as u8, g_value as u8, b_value as u8, alpha]
-            ));
-        }
+    let mut lookup_table = vec![0; 768];
+    for i in 0..256 {
+        lookup_table[i] = (i as f32 * factor + mix_red_offset) as u8;
+        lookup_table[i + 256] = (i as f32 * factor + mix_green_offset) as u8;
+        lookup_table[i + 512] = (i as f32 * factor + mix_blue_offset) as u8;
     }
-    photon_image.raw_pixels = img.to_vec();
+
+    let mut index = 0;
+    for i in 0..length {
+    // for x in 0.._width {
+    //     for y in 0.._height {
+        photon_image.raw_pixels[index] = lookup_table[photon_image.raw_pixels[index] as usize];
+        photon_image.raw_pixels[index + 1] = lookup_table[photon_image.raw_pixels[index + 1] as usize + 256];
+        photon_image.raw_pixels[index + 2] = lookup_table[photon_image.raw_pixels[index + 2] as usize + 512];
+        index += 4;
+    //        let px = img.get_pixel(x, y);
+    //        let r_value = lookup_table[px.data[0] as usize];
+    //        let g_value = lookup_table[px.data[1] as usize + 256];
+    //        let b_value = lookup_table[px.data[2] as usize + 512];
+    //        let alpha = px.data[3];
+    //        img.put_pixel(x, y, image::Rgba (
+    //                [r_value, g_value, b_value, alpha]
+    //        ));
+    //    }
+    }
+    //photon_image.raw_pixels = img.to_vec();
 }
 
 // #[wasm_bindgen]
